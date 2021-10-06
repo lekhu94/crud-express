@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var connection = require('../database');
+var bcrypt = require('bcrypt');
 
 router.post('/', function (req, res) {
   var email = req.body.email;
@@ -8,10 +9,27 @@ router.post('/', function (req, res) {
   connection.query(query, [email], function (err, result) {
     if (err) throw err;
 
-    let response;
-    if (result.length <= 0) response = { code: 201, message: 'Please enter correct email and Password!', user: null }
-    else response = { code: 200, message: 'You are successfully logged in', user: result }
-    res.send(response);
+    if (result.length <= 0) {
+      res.json({
+        code: 201,
+        message: 'Please enter correct email and Password!'
+      })
+    } else {
+      bcrypt.compare(req.body.password, result[0].password, function (err, resp) {
+        if (resp) {
+          res.json({
+            code: 200,
+            message: 'You are successfully logged in',
+            user: result
+          })
+        } else {
+          res.json({
+            code: 201,
+            message: 'Password is incorrect'
+          })
+        }
+      })
+    }
   });
 });
 
