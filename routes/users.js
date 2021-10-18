@@ -6,7 +6,16 @@ var bcrypt = require('bcrypt');
 
 /* Get user list */
 router.get('/', function (req, res) {
-  let query = 'SELECT * FROM customers ORDER BY id DESC';
+  let query = `SELECT * FROM customers`;
+  let defaultquery = `ORDER BY id DESC LIMIT ${req.query.limit}`;
+  let role = `WHERE role = '${req.query.role}' ${defaultquery}`;
+  let search = `WHERE name LIKE '%${req.query.search}%' ${defaultquery}`;
+  let bothfilter = `${query} WHERE (role = '${req.query.role}') AND (name LIKE '%${req.query.search}%') ${defaultquery}`;
+
+  if(req.query.role && !req.query.search) query = `${query} ${role}`;
+  else if(req.query.search && !req.query.role) query = `${query} ${search}`;
+  else if(req.query.role && req.query.search) query = bothfilter;
+  else query = `${query} ${defaultquery}`;
   connection.query(query, function (err, result) {
     if (err) throw err;
     let response = { code: 200, message: 'Users fetched successfully', data: result }
@@ -73,7 +82,6 @@ router.put('/edit/:id', function (req, res) {
   let query = 'UPDATE customers SET ? WHERE id='+req.params.id+'';
   connection.query(query, [req.body], function (err, result) {
     if (err) throw err;
-    console.log('edit result', result)
   });
   res.json({
     code: 200,

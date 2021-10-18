@@ -17,6 +17,8 @@ router.post('/', function (req, res) {
     } else {
       bcrypt.compare(req.body.password, result[0].password, function (err, resp) {
         if (resp) {
+          result[0].authdata = 'testing-authdata-token';
+          console.log('result',result)
           res.json({
             code: 200,
             message: 'You are successfully logged in',
